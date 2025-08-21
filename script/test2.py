@@ -85,17 +85,8 @@ columns_to_check = ['gp1', 'gp2', 'gp3', 'gp4', 'gp5', 'gp6', 'gp7',
                     'a_e1', 'a_e2', 'a_e3', 'a_e4', 'a_e5', 'a_e6', 'a_e7', 
                     'a_c6', 'a_c2', 'a_act11']
 
-# Keep rows with at least one non-missing value
-has_data = df[df[columns_to_check].notna().any(axis=1)]
-
-# For patients with NO valid FACT-E data at all, keep one row with all missing
-patients_with_data = has_data['id'].unique()
-all_missing = df[df[columns_to_check].isna().all(axis=1)]
-all_missing_no_valid_data = all_missing[~all_missing['id'].isin(patients_with_data)]
-keep_one_missing = all_missing_no_valid_data.groupby('id').first().reset_index()
-
-# Combine both
-df = pd.concat([has_data, keep_one_missing], ignore_index=True)
+# Keep only rows with at least one non-missing value
+df = df[df[columns_to_check].notna().any(axis=1)]
 
 # Remove duplicates where all 44 FACT-E scores are identical for the same patient
 df = df.drop_duplicates(subset=['id'] + columns_to_check, keep='first')
@@ -105,7 +96,21 @@ unique_patients = df['id'].nunique()
 patients_with_multiple = (df['id'].value_counts() > 1).sum()
 
 print(f"Unique patients: {unique_patients}")
-print(f"Patients with multiple rows: {patients_with_multiple}")        
+print(f"Patients with multiple rows: {patients_with_multiple}")
+
+df
+
+# Define target variables
+target_vars = ([f"gp{i}" for i in range(1, 8)] + [f"gs{i}" for i in range(1, 8)] +
+                [f"ge{i}" for i in range(1, 7)] + [f"gf{i}" for i in range(1, 8)] +
+                [f"a_hn{i}" for i in range(1, 6)] + ["a_hn7", "a_hn10"] +
+                [f"a_e{i}" for i in range(1, 8)] + ["a_c6", "a_c2", "a_act11"])
+
+# Calculate patient-level missingness
+patient_level = df.groupby('id')[target_vars].apply(lambda x: x.notna().any()).mean()
+patient_missingness = (1 - patient_level) * 100
+
+print(f"Patient-level missingness range: {patient_missingness.min():.1f}% - {patient_missingness.max():.1f}%")
 
 # Add these imports at the top of your file
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
@@ -3943,7 +3948,7 @@ def evaluate_real_data_imputation(df, columns_to_impute):
     return all_imputed_dfs, original_df_with_missing, execution_times, distribution_similarity
 
 
-def evaluate_with_sparse_validation(df, columns_to_impute, n_folds=3):
+def evaluate_with_sparse_validation(df, columns_to_impute, n_folds=5):
     """
     Evaluate imputation methods using cross-validation optimized for sparse data
     
@@ -4686,7 +4691,7 @@ def main_real_data(df, columns_to_impute):
     plot_correlation_preservation(plotting_df, imputed_dfs, columns_to_impute)
 
     print("\n===== Running sparse validation =====")
-    validation_results = evaluate_with_sparse_validation(df, columns_to_impute, n_folds=3)
+    validation_results = evaluate_with_sparse_validation(df, columns_to_impute, n_folds=5)
 
     # Plot validation results
     print("\nPlotting validation results...")
