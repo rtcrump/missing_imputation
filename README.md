@@ -1,2 +1,2 @@
 # missing_imputation
-Missing imputations
+Missing imputations: a. Baseline-only b. Timeseries (redcap events)
