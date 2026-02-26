@@ -1042,9 +1042,9 @@ class TemporalSimilarityLoss(nn.Module):
     def __init__(self):
         super(TemporalSimilarityLoss, self).__init__()
         
-    def forward(self, pred, patient_batch_indices):
+    def forward(self, pred, patient_batch_indices, timestamps):
         """
-        Calculate temporal similarity loss based on batch proximity
+        Calculate temporal similarity loss based on actual time differences within patients
         
         Parameters:
         -----------
@@ -1052,6 +1052,8 @@ class TemporalSimilarityLoss(nn.Module):
             Predicted values
         patient_batch_indices : torch.Tensor
             Indices grouping patients in the batch
+        timestamps : torch.Tensor
+            Actual timestamps (as days since epoch)
             
         Returns:
         --------
@@ -1064,15 +1066,12 @@ class TemporalSimilarityLoss(nn.Module):
         if batch_size <= 1:
             return torch.tensor(0.0, device=pred.device)
         
-        # Create batch position indices
-        indices = torch.arange(batch_size, device=pred.device).float()
-        
         # Expand dimensions for pairwise operations
         pred_expanded_1 = pred.unsqueeze(1)  # [batch, 1, features]
         pred_expanded_2 = pred.unsqueeze(0)  # [1, batch, features]
         
-        indices_1 = indices.unsqueeze(1)  # [batch, 1]
-        indices_2 = indices.unsqueeze(0)  # [1, batch]
+        timestamps_1 = timestamps.unsqueeze(1)  # [batch, 1]
+        timestamps_2 = timestamps.unsqueeze(0)  # [1, batch]
         
         # Calculate pairwise differences between predictions
         pred_diff = torch.sum((pred_expanded_1 - pred_expanded_2) ** 2, dim=2)
@@ -1092,9 +1091,8 @@ class TemporalSimilarityLoss(nn.Module):
         if torch.sum(combined_mask) == 0:
             return torch.tensor(0.0, device=pred.device)
         
-        # Calculate temporal similarity weights based on proximity in batch
-        # (Simple approach: closer indices = more similar)
-        temporal_diff = torch.abs(indices_1 - indices_2)
+        # Calculate temporal similarity weights based on actual time differences
+        temporal_diff = torch.abs(timestamps_1 - timestamps_2)
         similarity_weights = 1.0 / (temporal_diff + 1.0)
         
         # Apply masks and weights
