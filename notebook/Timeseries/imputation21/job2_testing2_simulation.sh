@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH --job-name=simulation_test    # Job name
+#SBATCH --mem=128G
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=9                 # Number of CPU cores (adjust as needed)
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=7-0:0:0    
+#SBATCH --gpus-per-node=1
+#SBATCH --mail-user=yjkweon24@berkeley.edu
+#SBATCH --mail-type=END,FAIL
+#SBATCH --output=facte_%x_%j.out        # Output file (%j is job ID)
+#SBATCH --error=facte_%x_%j.err         # Error file
+#SBATCH --account=def-rtc
+
+module load cuda/12.2
+module load gcc arrow/21.0.0
+
+# Activate your virtual environment (if you have one)
+source ~/jinenv/bin/activate
+
+# Change to project directory
+cd /home/yjkweon2/projects/def-rtc/yjkweon2/Missing_imputation_local/temporary_testing
+
+python test2_imputation21_simulation.py
