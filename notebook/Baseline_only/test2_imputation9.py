@@ -3919,6 +3919,14 @@ def evaluate_real_data_imputation(df, columns_to_impute):
             # Print execution time
             print(f"{method_name} completed in {execution_time:.2f} seconds")
             
+            # Variance check for imputed values
+            for col in columns_to_impute:
+                if col in imputed_df.columns:
+                    imputed_positions = original_df_with_missing[col].isna() & ~imputed_df[col].isna()
+                    if imputed_positions.any():
+                        var = imputed_df.loc[imputed_positions, col].var()
+                        print(f"  {method_name} - {col} imputed variance: {var:.4f}")
+            
             # Check if imputation was successful (no missing values in imputed columns)
             for col in columns_to_impute:
                 if col not in imputed_df.columns:
@@ -3987,7 +3995,7 @@ def evaluate_with_sparse_validation(df, columns_to_impute, n_folds=5):
     results = {method: {
         'mae': [], 'rmse': [], 'accuracy': [], 'auc_multiclass': [],
         'avg_sensitivity': [], 'avg_specificity': [], 'avg_ppv': [], 'avg_npv': [],
-        'precision_macro': [], 'recall_macro': [], 'time': [], 'qwk': []
+        'precision_macro': [], 'recall_macro': [], 'time': [], 'qwk': [], 'within1_accuracy': []
     } for method in methods}
 
     # IMPORTANT: Filter out columns that don't exist in the dataframe and any derived date columns
@@ -4096,13 +4104,17 @@ def evaluate_with_sparse_validation(df, columns_to_impute, n_folds=5):
                     imputed_vals_class = process_for_classification(imputed_values_filtered)
                     
                     classification_metrics = calculate_classification_metrics(real_vals_class, imputed_vals_class)
-                    
+                   
                     qwk = cohen_kappa_score(
                         real_vals_class, 
                         imputed_vals_class, 
                         weights='quadratic'
                     ) if len(np.unique(real_vals_class)) > 1 else 0.0
+                    
+                    within1 = np.mean(np.abs(real_vals_class - imputed_vals_class) <= 1)
+                    
                     results[method_name]['qwk'].append(qwk)
+                    results[method_name]['within1_accuracy'].append(within1)
                     
                     # Store results
                     results[method_name]['mae'].append(mae)
@@ -4126,7 +4138,7 @@ def evaluate_with_sparse_validation(df, columns_to_impute, n_folds=5):
 
     # Calculate average results across all columns and folds
     metric_names = ['mae', 'rmse', 'accuracy', 'auc_multiclass', 'avg_sensitivity', 'avg_specificity', 
-                    'avg_ppv', 'avg_npv', 'precision_macro', 'recall_macro', 'time', 'qwk']
+                    'avg_ppv', 'avg_npv', 'precision_macro', 'recall_macro', 'time', 'qwk', 'within1_accuracy']
     
     for method in methods:
         if results[method]['mae']:  # Check if we have any results
@@ -4235,7 +4247,7 @@ def plot_distribution_similarity(distribution_similarity):
     plt.savefig('distribution_pvalues.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-def plot_imputation_histograms(original_df, imputed_dfs, columns_to_impute):
+def plot_imputation_histograms(original_df, imputed_dfs, columns_to_impute, filename='imputation_histograms.png'):
     """
     Plot histograms of imputed values compared to original observed values
     
@@ -4312,9 +4324,27 @@ def plot_imputation_histograms(original_df, imputed_dfs, columns_to_impute):
         ax.grid(alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('imputation_histograms.png', dpi=300, bbox_inches='tight')
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close()  # Close the plot to free memory
-    print("Histogram plot saved to 'imputation_histograms.png'")
+    print(f"Histogram plot saved to '{filename}'")
+    
+def plot_imputation_histograms_by_subscale(original_df, imputed_dfs, columns_to_impute):
+    subscales = {
+        'Physical_Wellbeing_GP':      [f'gp{i}' for i in range(1, 8)],
+        'Social_Family_Wellbeing_GS': [f'gs{i}' for i in range(1, 8)],
+        'Emotional_Wellbeing_GE':     [f'ge{i}' for i in range(1, 7)],
+        'Functional_Wellbeing_GF':    [f'gf{i}' for i in range(1, 8)],
+        'Additional_Concerns':        ([f'a_hn{i}' for i in range(1, 6)] +
+                                       ['a_hn7', 'a_hn10'] +
+                                       [f'a_e{i}' for i in range(1, 8)] +
+                                       ['a_c2', 'a_c6', 'a_act11'])
+    }
+    for name, cols in subscales.items():
+        valid_cols = [col for col in cols if col in original_df.columns and col in columns_to_impute]
+        if not valid_cols:
+            continue
+        plot_imputation_histograms(original_df, imputed_dfs, valid_cols,
+                                   filename=f'imputation_histograms_{name}.png')
 
 def plot_correlation_preservation(original_df, imputed_dfs, columns_to_impute):
     """
@@ -4531,6 +4561,36 @@ def plot_qwk_results(validation_results):
     plt.tight_layout()
     plt.savefig('Quadratic_Weighted_Kappa.png', dpi=300, bbox_inches='tight')
     plt.close()
+    
+def export_qwk_ci_table(validation_results):
+    rows = []
+    for method, res in validation_results.items():
+        if 'qwk' in res and res['qwk']:
+            vals = np.array(res['qwk'])
+            mean = np.mean(vals)
+            ci_low = np.percentile(vals, 2.5)
+            ci_high = np.percentile(vals, 97.5)
+            rows.append({'Method': method, 'Mean_QWK': round(mean, 4),
+                            'CI_lower': round(ci_low, 4), 'CI_upper': round(ci_high, 4)})
+    pd.DataFrame(rows).sort_values('Mean_QWK', ascending=False).to_csv('qwk_ci_table.csv', index=False)
+    
+def plot_within1_results(validation_results):
+    methods = [m for m in validation_results if 'within1_accuracy' in validation_results[m] and validation_results[m]['within1_accuracy']]
+    means = [np.mean(validation_results[m]['within1_accuracy']) for m in methods]
+    stds = [np.std(validation_results[m]['within1_accuracy']) for m in methods]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.bar(methods, means, yerr=stds, capsize=5, alpha=0.7, color='steelblue')
+    ax.set_title('Within-1-Category Accuracy by Method (Higher = Better)')
+    ax.set_ylabel('Within-1 Accuracy')
+    ax.set_ylim([0, 1])
+    ax.axhline(0, color='red', linestyle='--', alpha=0.5)
+    ax.tick_params(axis='x', rotation=45)
+    for i, (m, s) in enumerate(zip(means, stds)):
+        ax.text(i, m + s + 0.02, f'{m:.3f}', ha='center', fontsize=9)
+    plt.tight_layout()
+    plt.savefig('within1_accuracy.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
 def create_summary_dataframe(imputed_dfs, validation_results, distribution_similarity, execution_times):
     """
@@ -4571,6 +4631,8 @@ def create_summary_dataframe(imputed_dfs, validation_results, distribution_simil
             method_summary['Specificity'] = validation_results[method].get('avg_avg_specificity', np.nan)
             method_summary['PPV'] = validation_results[method].get('avg_avg_ppv', np.nan)
             method_summary['NPV'] = validation_results[method].get('avg_avg_npv', np.nan)
+            method_summary['QWK'] = validation_results[method].get('avg_qwk', np.nan)
+            method_summary['Within1_Accuracy'] = validation_results[method].get('avg_within1_accuracy', np.nan)
         else:
             method_summary['MAE'] = np.nan
             method_summary['RMSE'] = np.nan
@@ -4580,6 +4642,8 @@ def create_summary_dataframe(imputed_dfs, validation_results, distribution_simil
             method_summary['Specificity'] = np.nan
             method_summary['PPV'] = np.nan
             method_summary['NPV'] = np.nan
+            method_summary['QWK'] = np.nan
+            method_summary['Within1_Accuracy'] = np.nan
         
         # Add execution time
         if method in execution_times:
@@ -4623,7 +4687,7 @@ def create_summary_dataframe(imputed_dfs, validation_results, distribution_simil
             summary_df[f'{metric} Rank'] = summary_df[metric].rank()
     
     # Higher is better for these metrics
-    for metric in ['Accuracy', 'AUC', 'Sensitivity', 'Specificity', 'PPV', 'NPV', 'Avg KS p-value']:
+    for metric in ['Accuracy', 'AUC', 'Sensitivity', 'Specificity', 'PPV', 'NPV', 'Avg KS p-value', 'QWK', 'Within1_Accuracy']:
         if metric in summary_df.columns:
             summary_df[f'{metric} Rank'] = summary_df[metric].rank(ascending=False)
     
@@ -4716,6 +4780,8 @@ def main_real_data(df, columns_to_impute):
     print("\nPlotting imputation histograms...")
     plot_imputation_histograms(plotting_df, imputed_dfs, columns_to_impute)
 
+    plot_imputation_histograms_by_subscale(plotting_df, imputed_dfs, columns_to_impute)
+    
     # Plot correlation preservation
     print("\nPlotting correlation preservation...")
     plot_correlation_preservation(plotting_df, imputed_dfs, columns_to_impute)
@@ -4728,6 +4794,10 @@ def main_real_data(df, columns_to_impute):
     plot_validation_results(validation_results)
     
     plot_qwk_results(validation_results)
+    
+    export_qwk_ci_table(validation_results)
+    
+    plot_within1_results(validation_results)
 
     # Create summary dataframe
     print("\nCreating summary of results...")
