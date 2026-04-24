@@ -4579,13 +4579,22 @@ def plot_within1_results(validation_results):
     means = [np.mean(validation_results[m]['within1_accuracy']) for m in methods]
     stds = [np.std(validation_results[m]['within1_accuracy']) for m in methods]
 
+    accuracy_means = [np.mean(validation_results[m]['accuracy']) if validation_results[m].get('accuracy') else 0 for m in methods]
+    
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.bar(methods, means, yerr=stds, capsize=5, alpha=0.7, color='steelblue')
     ax.set_title('Within-1-Category Accuracy by Method (Higher = Better)')
     ax.set_ylabel('Within-1 Accuracy')
     ax.set_ylim([0, 1])
-    ax.axhline(0, color='red', linestyle='--', alpha=0.5)
     ax.tick_params(axis='x', rotation=45)
+    
+    for i, acc in enumerate(accuracy_means):
+        ax.plot([i - 0.4, i + 0.4], [acc, acc], color='red', linestyle='--', linewidth=1.5)
+    
+    from matplotlib.lines import Line2D
+    ax.legend(handles=[Line2D([0], [0], color='red', linestyle='--', linewidth=1.5)],
+            labels=['Exact Accuracy'], loc='lower right')
+    
     for i, (m, s) in enumerate(zip(means, stds)):
         ax.text(i, m + s + 0.02, f'{m:.3f}', ha='center', fontsize=9)
     plt.tight_layout()
