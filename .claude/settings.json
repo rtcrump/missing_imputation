@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(python *)",
+      "Bash(pip *)",
+      "Bash(pytest *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(gh *)",
+      "PowerShell(git *)",
+      "PowerShell(python *)",
+      "PowerShell(pip *)",
+      "PowerShell(pytest *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(gh *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push * --force*)",
+      "Bash(git push origin main*)",
+      "PowerShell(Remove-Item -Recurse -Force *)",
+      "PowerShell(git push * --force*)",
+      "PowerShell(git push origin main*)"
+    ]
+  }
+}
