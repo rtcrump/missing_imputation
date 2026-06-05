@@ -43,6 +43,16 @@ METHODS = {
     "softimpute": apply_softimpute_imputation,
 }
 
+# Imported after METHODS is defined: the evaluation harness defaults to scoring
+# this registry, and its submodules lazily import METHODS at call time.
+from .evaluation import (  # noqa: E402
+    evaluate_missing_pattern_robustness,
+    evaluate_temporal_smoothness,
+    evaluate_trajectory_fidelity,
+    evaluate_with_sparse_validation,
+    run_all_methods,
+)
+
 __all__ = [
     "__version__",
     "columns",
@@ -57,4 +67,9 @@ __all__ = [
     "calculate_classification_metrics",
     "make_synthetic_facte",
     "introduce_missingness",
+    "evaluate_with_sparse_validation",
+    "evaluate_trajectory_fidelity",
+    "evaluate_temporal_smoothness",
+    "evaluate_missing_pattern_robustness",
+    "run_all_methods",
 ]
