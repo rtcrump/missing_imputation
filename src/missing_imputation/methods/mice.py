@@ -5,19 +5,30 @@ Extracted from the research pipeline. The public entry point is
 match the published experiments.
 """
 
+from __future__ import annotations
+
 import os
+from typing import Dict, List, Optional
 
 import miceforest as mf
 import numpy as np
+import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from tqdm import tqdm
 
 from ..metrics import calculate_classification_metrics, process_for_classification
+from .simple import ImputationResult
 
 __all__ = ["apply_mice_imputation"]
 
 
-def apply_mice_imputation(df, columns_to_impute, validation_df=None, validation_masks=None, original_values=None):
+def apply_mice_imputation(
+    df: pd.DataFrame,
+    columns_to_impute: List[str],
+    validation_df: Optional[pd.DataFrame] = None,
+    validation_masks: Optional[Dict[str, pd.Series]] = None,
+    original_values: Optional[Dict[str, pd.Series]] = None,
+) -> ImputationResult:
     """
     Apply MICE imputation using miceforest package
 

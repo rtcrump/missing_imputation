@@ -4,6 +4,10 @@ Extracted from the research pipeline. The public entry point is
 ``apply_knn_imputation``; the imputation logic is preserved exactly.
 """
 
+from __future__ import annotations
+
+from typing import Dict, List, Optional
+
 import numpy as np
 import pandas as pd
 from sklearn.impute import KNNImputer
@@ -11,12 +15,21 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from tqdm import tqdm
 
 from ..metrics import calculate_classification_metrics, process_for_classification
+from .simple import ImputationResult
 
 __all__ = ["apply_knn_imputation"]
 
 
-def apply_knn_imputation(df, columns_to_impute, validation_df=None, validation_masks=None, original_values=None,
-                        n_neighbors=5, weights='uniform', metric='nan_euclidean'):
+def apply_knn_imputation(
+    df: pd.DataFrame,
+    columns_to_impute: List[str],
+    validation_df: Optional[pd.DataFrame] = None,
+    validation_masks: Optional[Dict[str, pd.Series]] = None,
+    original_values: Optional[Dict[str, pd.Series]] = None,
+    n_neighbors: int = 5,
+    weights: str = 'uniform',
+    metric: str = 'nan_euclidean',
+) -> ImputationResult:
     """
     Apply KNN imputation using scikit-learn's KNNImputer
 

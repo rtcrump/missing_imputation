@@ -8,6 +8,10 @@ access to the real clinical files.
 All values are randomly generated. No real patient data is used or reproduced.
 """
 
+from __future__ import annotations
+
+from typing import List
+
 import numpy as np
 import pandas as pd
 
@@ -16,7 +20,12 @@ from .columns import FACTE_COLUMNS, LIKERT_MAX, LIKERT_MIN, VISITS
 __all__ = ["make_synthetic_facte", "introduce_missingness"]
 
 
-def make_synthetic_facte(n_patients=60, n_visits=5, missing_rate=0.15, seed=42):
+def make_synthetic_facte(
+    n_patients: int = 60,
+    n_visits: int = 5,
+    missing_rate: float = 0.15,
+    seed: int = 42,
+) -> pd.DataFrame:
     """Generate a synthetic longitudinal FACT-E dataset.
 
     Each patient has a latent well-being trajectory that drifts smoothly across
@@ -72,7 +81,12 @@ def make_synthetic_facte(n_patients=60, n_visits=5, missing_rate=0.15, seed=42):
     return df
 
 
-def introduce_missingness(df, columns, rate=0.15, seed=42):
+def introduce_missingness(
+    df: pd.DataFrame,
+    columns: List[str],
+    rate: float = 0.15,
+    seed: int = 42,
+) -> pd.DataFrame:
     """Set a random fraction of cells in ``columns`` to NaN (MCAR).
 
     Returns a copy; the input frame is not modified.
