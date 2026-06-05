@@ -6,9 +6,14 @@ held-out true values. Extracted verbatim from the research pipeline so results
 remain identical to the published experiments.
 """
 
+from __future__ import annotations
+
+from typing import Optional, Sequence
+
 import numpy as np
 from sklearn.metrics import (
     accuracy_score,
+    cohen_kappa_score,
     confusion_matrix,
     precision_score,
     recall_score,
@@ -19,7 +24,7 @@ from sklearn.preprocessing import label_binarize
 __all__ = ["process_for_classification", "calculate_classification_metrics"]
 
 
-def process_for_classification(values, min_val=0, max_val=4):
+def process_for_classification(values, min_val: int = 0, max_val: int = 4) -> np.ndarray:
     """
     Process imputed values for classification evaluation
 
@@ -44,7 +49,9 @@ def process_for_classification(values, min_val=0, max_val=4):
     return clipped.astype(int)
 
 
-def calculate_classification_metrics(y_true, y_pred, classes=None):
+def calculate_classification_metrics(
+    y_true, y_pred, classes: Optional[Sequence[int]] = None
+) -> dict:
     """
     Calculate classification metrics for multi-class problem
 
@@ -72,6 +79,17 @@ def calculate_classification_metrics(y_true, y_pred, classes=None):
 
         # Basic accuracy
         accuracy = accuracy_score(y_true, y_pred)
+
+        # Ordinal-aware metrics (FACT-E items are a 0-4 ordinal scale).
+        # Quadratic weighted kappa rewards near-misses; "within-1" accuracy is the
+        # fraction of predictions off by at most one Likert category. Formulas are
+        # preserved verbatim from the research pipeline.
+        qwk = (
+            cohen_kappa_score(y_true, y_pred, weights="quadratic")
+            if len(np.unique(y_true)) > 1
+            else 0.0
+        )
+        within1_accuracy = np.mean(np.abs(y_true - y_pred) <= 1)
 
         # Macro-averaged metrics (average across classes)
         precision_macro = precision_score(y_true, y_pred, average='macro', zero_division=0)
@@ -139,6 +157,8 @@ def calculate_classification_metrics(y_true, y_pred, classes=None):
         return {
             'accuracy': accuracy,
             'auc_multiclass': auc_score,
+            'qwk': qwk,
+            'within1_accuracy': within1_accuracy,
             'precision_macro': precision_macro,
             'recall_macro': recall_macro,
             'precision_weighted': precision_weighted,
@@ -156,6 +176,8 @@ def calculate_classification_metrics(y_true, y_pred, classes=None):
         return {
             'accuracy': np.nan,
             'auc_multiclass': np.nan,
+            'qwk': np.nan,
+            'within1_accuracy': np.nan,
             'precision_macro': np.nan,
             'recall_macro': np.nan,
             'precision_weighted': np.nan,
