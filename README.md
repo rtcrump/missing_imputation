@@ -94,6 +94,40 @@ for name, fn in mi.METHODS.items():
     imputed, _ = fn(df, FACTE_COLUMNS)
 ```
 
+## Benchmarking and evaluation
+
+The `missing_imputation.evaluation` module compares methods on your own data.
+Every evaluator defaults to scoring the classical `METHODS` registry, but
+accepts any `{name: apply_*_imputation}` mapping via `methods=`.
+
+```python
+import missing_imputation as mi
+from missing_imputation.columns import FACTE_COLUMNS
+
+df = mi.make_synthetic_facte(n_patients=120, n_visits=6, missing_rate=0.25)
+
+# Cross-validated benchmark: repeatedly mask observed cells, impute, and score.
+results = mi.evaluate_with_sparse_validation(df, FACTE_COLUMNS, n_folds=5)
+for method, r in results.items():
+    print(f"{method:10s} MAE={r['avg_mae']:.3f}  QWK={r['avg_qwk']:.3f}  "
+          f"within1={r['avg_within1_accuracy']:.3f}")
+```
+
+| Evaluator | What it measures |
+|---|---|
+| `evaluate_with_sparse_validation` | Fold-wise masking cross-validation: MAE/RMSE plus the full classification suite (accuracy, AUC, **QWK**, **within-1-category accuracy**, sensitivity/specificity/PPV/NPV). |
+| `evaluate_trajectory_fidelity` | Masks each patient's middle visit; scores how well the imputed values match the true per-patient trajectory (MAE + correlation). |
+| `evaluate_temporal_smoothness` | Penalises unrealistic visit-to-visit jumps in already-imputed frames. Pair with `run_all_methods`. |
+| `evaluate_missing_pattern_robustness` | Compares accuracy on monotone (permanent dropout) vs intermittent (sporadic) missingness. |
+
+The scoring metrics are ordinal-aware: **quadratic weighted kappa (QWK)** rewards
+near-misses on the 0–4 Likert scale, and **within-1-category accuracy** reports
+the fraction of imputations off by at most one category. Both are returned by
+`missing_imputation.metrics.calculate_classification_metrics`.
+
+See [`examples/benchmark.py`](examples/benchmark.py) for a full run across all
+four evaluators.
+
 ## Command line
 
 ```bash
@@ -115,10 +149,13 @@ ordinal range), never any real values.
 - [x] Package skeleton, `pip install -e .`, CLI
 - [x] Classical methods extracted, tested, benchmarkable on synthetic data
 - [x] Synthetic FACT-E data generator
+- [x] Evaluation suite extracted (sparse-validation, trajectory fidelity,
+      temporal smoothness, missing-pattern robustness) + QWK / within-1 metrics
+- [x] Type hints on the public imputation API
 - [ ] Extract deep-learning methods (VAE, deep autoencoder, BayesianPCA, LSTM)
 - [ ] Extract longitudinal MICE and LLM methods (Gemma + LoRA, TimesFM)
-- [ ] Extract the evaluation/plotting suite (trajectory fidelity, QWK, etc.)
-- [ ] API reference docs
+- [ ] Plotting helpers for the evaluation results
+- [ ] API reference docs site
 
 ## Development
 
