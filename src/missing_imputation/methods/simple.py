@@ -8,6 +8,10 @@ the same ``apply_*_imputation`` signature and validation reporting as the other
 methods, so it can be benchmarked uniformly.
 """
 
+from __future__ import annotations
+
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -16,6 +20,9 @@ from tqdm import tqdm
 from ..metrics import calculate_classification_metrics, process_for_classification
 
 __all__ = ["apply_mean_imputation", "apply_median_imputation"]
+
+# Common shape of an ``apply_*_imputation`` return value.
+ImputationResult = Tuple[pd.DataFrame, Optional[Dict[str, dict]]]
 
 
 def _validate(imputed_df, columns_to_impute, validation_df, validation_masks,
@@ -90,15 +97,25 @@ def _apply_simple(df, columns_to_impute, statistic, validation_df,
     return imputed_df, validation_results
 
 
-def apply_mean_imputation(df, columns_to_impute, validation_df=None,
-                          validation_masks=None, original_values=None):
+def apply_mean_imputation(
+    df: pd.DataFrame,
+    columns_to_impute: List[str],
+    validation_df: Optional[pd.DataFrame] = None,
+    validation_masks: Optional[Dict[str, pd.Series]] = None,
+    original_values: Optional[Dict[str, pd.Series]] = None,
+) -> ImputationResult:
     """Impute missing values with each column's mean. See module docstring."""
     return _apply_simple(df, columns_to_impute, 'mean',
                          validation_df, validation_masks, original_values)
 
 
-def apply_median_imputation(df, columns_to_impute, validation_df=None,
-                            validation_masks=None, original_values=None):
+def apply_median_imputation(
+    df: pd.DataFrame,
+    columns_to_impute: List[str],
+    validation_df: Optional[pd.DataFrame] = None,
+    validation_masks: Optional[Dict[str, pd.Series]] = None,
+    original_values: Optional[Dict[str, pd.Series]] = None,
+) -> ImputationResult:
     """Impute missing values with each column's median. See module docstring."""
     return _apply_simple(df, columns_to_impute, 'median',
                          validation_df, validation_masks, original_values)

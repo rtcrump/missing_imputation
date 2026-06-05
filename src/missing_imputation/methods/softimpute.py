@@ -6,6 +6,10 @@ implementation. The public entry point is ``apply_softimpute_imputation``;
 logic is preserved exactly from the research pipeline.
 """
 
+from __future__ import annotations
+
+from typing import Dict, List, Optional
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -13,6 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 from ..metrics import calculate_classification_metrics, process_for_classification
+from .simple import ImputationResult
 
 __all__ = ["SoftImpute", "apply_softimpute_imputation", "frob"]
 
@@ -96,8 +101,18 @@ class SoftImpute:
             return X_imp
 
 
-def apply_softimpute_imputation(df, columns_to_impute, validation_df=None, validation_masks=None, original_values=None,
-                               J=None, thresh=1e-05, lambda_=0, maxit=100, random_state=42):
+def apply_softimpute_imputation(
+    df: pd.DataFrame,
+    columns_to_impute: List[str],
+    validation_df: Optional[pd.DataFrame] = None,
+    validation_masks: Optional[Dict[str, pd.Series]] = None,
+    original_values: Optional[Dict[str, pd.Series]] = None,
+    J: Optional[int] = None,
+    thresh: float = 1e-05,
+    lambda_: float = 0,
+    maxit: int = 100,
+    random_state: int = 42,
+) -> ImputationResult:
     """
     Apply SoftImpute imputation using Travis Brady's implementation
 
