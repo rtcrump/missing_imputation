@@ -1,6 +1,13 @@
 # Clinical data — NEVER commit to public repo
 data/
 
+# Research notebooks — contain PHI in cell outputs, excluded from public repo
+notebook/
+
+# HPC job logs — may contain patient identifiers
+*.out
+*.err
+
 # Python
 __pycache__/
 *.py[cod]
