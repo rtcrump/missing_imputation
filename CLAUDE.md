@@ -123,6 +123,20 @@ The PI's Chief of Staff (CoS) reads session reports from
 digest cycle. Write clearly enough that someone who hasn't seen the code
 can understand progress and blockers.
 
+## PI Decisions (2026-06-18)
+
+1. **Skip deep-learning method extraction for MVP.** Ship classical methods +
+   evaluation suite as v1.0. Deep methods (VAE, LSTM, autoencoder, BayesianPCA)
+   are a v1.1 addition — do not block shipping on torch dependency.
+2. **Data stays private.** `data/` remains gitignored. De-identified clinical
+   data is not published. Synthetic demo data in examples/ is sufficient.
+3. **License: MIT, copyright R. Trafford Crump.**
+4. **Git-history scrub required before making repo public.** The upstream
+   Crump-Lab fork has clinical data in its git history. Run `git filter-repo`
+   or BFG Repo Cleaner before flipping the repo to public. This is a Phase 4
+   gate — the PR from packaging to main can land first, but the repo must not
+   go public until history is clean.
+
 ## Reference
 
 - **Paper:** Submitted May 15, 2026 (McGill deliverable). The paper describes

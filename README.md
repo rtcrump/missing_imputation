@@ -10,11 +10,9 @@ data collected at multiple timepoints. It is being packaged into an installable,
 documented open-source tool for clinical researchers who need to handle missing
 data in longitudinal PRO datasets.
 
-> **Status:** Alpha. The classical imputation methods (mean, median, KNN, MICE,
-> SoftImpute) are packaged, tested, and usable today. The deep-learning
-> (VAE, deep autoencoder, BayesianPCA, LSTM) and LLM-based methods
-> (Gemma + LoRA, TimesFM) currently live in the research notebooks under
-> [`notebook/`](notebook/) and are being extracted into the package — see
+> **Status:** v1.0 — Classical imputation methods (mean, median, KNN, MICE,
+> SoftImpute) and a full evaluation suite are packaged, tested, and ready to
+> use. Deep-learning and LLM-based methods are planned for v1.1 — see
 > [Roadmap](#roadmap).
 
 ## What it does
@@ -34,8 +32,6 @@ Emotional, Functional well-being, and an Esophageal Cancer Subscale); see
 ```bash
 pip install -e .            # core: classical methods + synthetic data + CLI
 pip install -e ".[dev]"     # + pytest, ruff
-pip install -e ".[deep]"    # + torch / tensorflow (for deep-learning methods)
-pip install -e ".[llm]"     # + transformers / peft (for LLM methods)
 pip install -e ".[plot]"    # + matplotlib / seaborn (for plotting helpers)
 ```
 
@@ -146,15 +142,21 @@ ordinal range), never any real values.
 
 ## Roadmap
 
+### v1.0 (current)
+
 - [x] Package skeleton, `pip install -e .`, CLI
 - [x] Classical methods extracted, tested, benchmarkable on synthetic data
 - [x] Synthetic FACT-E data generator
-- [x] Evaluation suite extracted (sparse-validation, trajectory fidelity,
+- [x] Evaluation suite (sparse-validation, trajectory fidelity,
       temporal smoothness, missing-pattern robustness) + QWK / within-1 metrics
 - [x] Type hints on the public imputation API
-- [ ] Extract deep-learning methods (VAE, deep autoencoder, BayesianPCA, LSTM)
-- [ ] Extract longitudinal MICE and LLM methods (Gemma + LoRA, TimesFM)
-- [ ] Plotting helpers for the evaluation results
+- [x] CI (GitHub Actions): lint + test on Python 3.9 / 3.11 / 3.12
+
+### v1.1 (planned)
+
+- [ ] Deep-learning methods (VAE, deep autoencoder, BayesianPCA, LSTM)
+- [ ] LLM-based methods (Gemma + LoRA, TimesFM)
+- [ ] Plotting helpers for evaluation results
 - [ ] API reference docs site
 
 ## Development
