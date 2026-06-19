@@ -2,8 +2,8 @@
 
 A toolkit for imputing missing values in longitudinal patient-reported outcome
 (PRO) data, built around the FACT-E (Functional Assessment of Cancer Therapy -
-Esophageal) questionnaire. It compares classical statistical imputation against
-deep-learning and LLM-based methods.
+Esophageal) questionnaire. Provides classical statistical imputation methods
+and an evaluation suite for benchmarking them on your own data.
 
 Quick start
 -----------
@@ -32,7 +32,7 @@ from .methods import (
 from .metrics import calculate_classification_metrics, process_for_classification
 from .synthetic import introduce_missingness, make_synthetic_facte
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 # Registry mapping method name -> callable, for programmatic dispatch / CLI.
 METHODS = {

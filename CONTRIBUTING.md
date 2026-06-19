@@ -31,7 +31,7 @@ src/missing_imputation/
   methods/           # one module per imputation method
 tests/               # pytest suite (runs on synthetic data only)
 examples/            # runnable usage examples
-notebook/            # original research notebooks (methods being extracted)
+notebook/            # original research notebooks (reference only)
 ```
 
 ## Adding or extracting an imputation method
@@ -51,9 +51,9 @@ notebooks under `notebook/`. To add a method:
    `__init__.py`.
 4. Add a smoke test in `tests/test_methods.py` (it should fill all missing
    cells on synthetic data and return a well-formed `validation_results`).
-5. If the method needs heavy dependencies (torch, tensorflow, transformers),
-   import them lazily inside the function and add them to the appropriate
-   optional-dependency extra (`deep` / `llm`) in `pyproject.toml`.
+5. If the method needs heavy dependencies (torch, transformers, etc.),
+   import them lazily inside the function and add them to an appropriate
+   optional-dependency extra in `pyproject.toml`.
 
 ## Data safety
 
