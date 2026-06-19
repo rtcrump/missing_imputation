@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "missing_imputation"
+version = "1.0.0"
+description = "Imputation of missing values in longitudinal clinical patient-reported outcome (FACT-E) data."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "R. Trafford Crump" },
+]
+keywords = [
+    "missing-data",
+    "imputation",
+    "clinical",
+    "patient-reported-outcomes",
+    "FACT-E",
+    "longitudinal",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+# Core dependencies: classical methods (mean, median, KNN, MICE, SoftImpute),
+# synthetic data, metrics, and CLI. No GPU / deep-learning stack required.
+dependencies = [
+    "numpy>=1.21.0",
+    "pandas>=1.5.0",
+    "scipy>=1.7.0",
+    "scikit-learn>=1.0.0",
+    "miceforest>=6.0.0",
+    "tqdm>=4.60.0",
+]
+
+[project.optional-dependencies]
+# Plotting utilities used by the evaluation/reporting helpers.
+plot = [
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+]
+# Development + testing.
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+missing-impute = "missing_imputation.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Crump-Lab/missing_imputation"
+Repository = "https://github.com/Crump-Lab/missing_imputation"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+# Keep linting light: research code preserved verbatim should not be churned.
+select = ["E", "F", "I"]
+ignore = [
+    "E501",  # line length handled loosely for extracted research code
+    "E741",  # ambiguous variable names (l, I) appear in original math code
+]
