@@ -17,21 +17,24 @@ missing-impute impute INPUT -o OUTPUT [--method METHOD] [--columns COLS]
 | `INPUT` | Path to the input CSV or XLSX file |
 | `-o`, `--output` | **Required.** Output CSV path |
 | `-m`, `--method` | Imputation method: `knn` (default), `mean`, `median`, `mice`, `softimpute` |
-| `--columns` | Comma-separated column names to impute. Defaults to FACT-E items found in the file |
+| `--columns` | Comma-separated column names to impute. If omitted, defaults to FACT-E items found in the file (the included demo instrument) |
 
 **Examples:**
 
 ```bash
-# Impute with KNN (default)
-missing-impute impute patient_data.csv -o imputed.csv
+# Impute your own columns with KNN (default method)
+missing-impute impute patient_data.csv -o imputed.csv --columns q1,q2,q3,q4,q5
 
 # Impute specific columns with MICE
-missing-impute impute data.csv -o filled.csv --method mice --columns "gp1,gp2,gp3"
+missing-impute impute data.csv -o filled.csv --method mice --columns "pain,fatigue,nausea"
+
+# Works with the demo dataset out of the box (auto-detects FACT-E columns)
+missing-impute impute demo.csv -o filled.csv
 ```
 
 ### `missing-impute demo`
 
-Generate a synthetic FACT-E dataset for testing.
+Generate a synthetic dataset for testing. Uses the FACT-E questionnaire structure (44 ordinal 0–4 items across multiple visits).
 
 ```bash
 missing-impute demo -o OUTPUT [--patients N] [--visits N] [--missing RATE]

@@ -33,7 +33,7 @@ import missing_imputation as mi
 
 for name, fn in mi.METHODS.items():
     imputed, _ = fn(df, columns_to_impute)
-    print(f"{name}: {imputed.isna().sum().sum()} remaining NaNs")
+    print(f"{name}: {imputed[columns_to_impute].isna().sum().sum()} remaining NaNs")
 ```
 
 ## Choosing a method
@@ -61,9 +61,26 @@ if results and results.get("_fallback"):
     print("Warning: KNN failed, used mean imputation instead")
 ```
 
-## FACT-E column structure
+## Ordinal metrics configuration
 
-The 44 FACT-E items are organised into subscales, defined in `missing_imputation.columns`:
+The evaluation metrics default to a 0–4 ordinal scale (Likert-type), but this is configurable:
+
+```python
+from missing_imputation.metrics import process_for_classification
+
+# Default: 0-4 scale (e.g., FACT-E, many PRO instruments)
+rounded = process_for_classification(imputed_values)
+
+# Custom scale: 1-5 (e.g., SF-36 items)
+rounded = process_for_classification(imputed_values, min_val=1, max_val=5)
+
+# Custom scale: 0-10 (e.g., NRS pain scale)
+rounded = process_for_classification(imputed_values, min_val=0, max_val=10)
+```
+
+## Included demo data: FACT-E
+
+The package ships with a synthetic FACT-E (Functional Assessment of Cancer Therapy — Esophageal) dataset for testing and examples. The 44 FACT-E items are organised into subscales:
 
 | Subscale | Items | Count |
 |---|---|---|
@@ -73,12 +90,12 @@ The 44 FACT-E items are organised into subscales, defined in `missing_imputation
 | FWB (Functional Well-Being) | gf1 — gf7 | 7 |
 | ECS (Esophageal Cancer Subscale) | a_hn1—a_hn5, a_hn7, a_hn10, a_e1—a_e7, a_c6, a_c2, a_act11 | 17 |
 
-All items are scored on a 0–4 Likert scale (`LIKERT_MIN=0`, `LIKERT_MAX=4`).
-
 ```python
 from missing_imputation.columns import FACTE_COLUMNS, SUBSCALES
+from missing_imputation import make_synthetic_facte
 
-print(f"Total items: {len(FACTE_COLUMNS)}")
-for subscale, items in SUBSCALES.items():
-    print(f"  {subscale}: {len(items)} items")
+# Generate demo data
+df = make_synthetic_facte(n_patients=60, n_visits=5, missing_rate=0.2)
 ```
+
+This demo data is useful for getting started and running the examples, but the imputation methods and evaluation suite work with any dataset.
