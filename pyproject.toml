@@ -65,9 +65,9 @@ docs = [
 missing-impute = "missing_imputation.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Crump-Lab/missing_imputation"
-Documentation = "https://crump-lab.github.io/missing_imputation/"
-Repository = "https://github.com/Crump-Lab/missing_imputation"
+Homepage = "https://github.com/rtcrump/missing_imputation"
+Documentation = "https://rtcrump.github.io/missing_imputation/"
+Repository = "https://github.com/rtcrump/missing_imputation"
 
 [tool.setuptools.packages.find]
 where = ["src"]

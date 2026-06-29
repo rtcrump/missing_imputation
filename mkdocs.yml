@@ -1,8 +1,8 @@
 site_name: missing_imputation
 site_description: Imputation of missing values in longitudinal clinical patient-reported outcome data
-site_url: https://crump-lab.github.io/missing_imputation/
-repo_url: https://github.com/Crump-Lab/missing_imputation
-repo_name: Crump-Lab/missing_imputation
+site_url: https://rtcrump.github.io/missing_imputation/
+repo_url: https://github.com/rtcrump/missing_imputation
+repo_name: rtcrump/missing_imputation
 
 theme:
   name: material

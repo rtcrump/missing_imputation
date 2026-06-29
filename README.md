@@ -15,7 +15,7 @@ data in longitudinal PRO datasets.
 > use. Deep-learning and LLM-based methods are planned for v1.1 — see
 > [Roadmap](#roadmap).
 
-**[Documentation](https://crump-lab.github.io/missing_imputation/)** — full
+**[Documentation](https://rtcrump.github.io/missing_imputation/)** — full
 guides on methods, evaluation, CLI, and auto-generated API reference.
 
 ## What it does
