@@ -14,6 +14,9 @@ result plot/
 *.out
 *.err
 
+# MkDocs build output
+site/
+
 # Python
 __pycache__/
 *.py[cod]

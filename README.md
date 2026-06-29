@@ -15,6 +15,9 @@ data in longitudinal PRO datasets.
 > use. Deep-learning and LLM-based methods are planned for v1.1 — see
 > [Roadmap](#roadmap).
 
+**[Documentation](https://crump-lab.github.io/missing_imputation/)** — full
+guides on methods, evaluation, CLI, and auto-generated API reference.
+
 ## What it does
 
 Clinical PRO instruments like FACT-E ask patients to answer dozens of ordinal
@@ -157,7 +160,7 @@ ordinal range), never any real values.
 - [ ] Deep-learning methods (VAE, deep autoencoder, BayesianPCA, LSTM)
 - [ ] LLM-based methods (Gemma + LoRA, TimesFM)
 - [ ] Plotting helpers for evaluation results
-- [ ] API reference docs site
+- [x] Documentation site (MkDocs-Material + mkdocstrings, deployed to GitHub Pages)
 
 ## Development
 

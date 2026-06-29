@@ -54,12 +54,19 @@ dev = [
     "pytest>=7.0",
     "ruff>=0.1.0",
 ]
+# Documentation site.
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+]
 
 [project.scripts]
 missing-impute = "missing_imputation.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/Crump-Lab/missing_imputation"
+Documentation = "https://crump-lab.github.io/missing_imputation/"
 Repository = "https://github.com/Crump-Lab/missing_imputation"
 
 [tool.setuptools.packages.find]
