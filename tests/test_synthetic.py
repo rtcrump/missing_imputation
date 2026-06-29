@@ -44,3 +44,11 @@ def test_introduce_missingness_does_not_mutate_input():
     out = introduce_missingness(df, FACTE_COLUMNS, rate=0.3, seed=1)
     assert before == 0
     assert out[FACTE_COLUMNS].isna().sum().sum() > 0
+
+
+def test_invalid_n_visits_raises():
+    import pytest
+    with pytest.raises(ValueError, match="n_visits must be between"):
+        make_synthetic_facte(n_visits=99)
+    with pytest.raises(ValueError, match="n_visits must be between"):
+        make_synthetic_facte(n_visits=0)

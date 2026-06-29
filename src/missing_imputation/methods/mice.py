@@ -53,6 +53,12 @@ def apply_mice_imputation(
         Validation results if validation data provided
     """
 
+    for col in columns_to_impute:
+        if col in df.columns and df[col].isna().all():
+            raise ValueError(
+                f"Column '{col}' is entirely NaN — cannot impute from no observations"
+            )
+
     # Set threads for LightGBM
     os.environ['OMP_NUM_THREADS'] = '10'
 
@@ -97,9 +103,23 @@ def apply_mice_imputation(
     if validation_df is not None and validation_masks is not None and original_values is not None:
         validation_results = {}
 
-        # Compare imputed values to real values
+        # Fit a separate MICE kernel on the validation frame so we score
+        # values imputed from the held-out data, not from the training frame.
+        val_mice = validation_df.select_dtypes(exclude=['object', 'datetime64[ns]', 'datetime64']).copy()
+        val_kernel = mf.ImputationKernel(
+            val_mice,
+            num_datasets=1,
+            variable_schema={
+                col: [c for c in val_mice.columns if c != col] for col in columns_to_impute
+            },
+            random_state=42,
+        )
+        for _ in range(5):
+            val_kernel.mice(iterations=1, verbose=False, num_boost_round=80,
+                            max_depth=10, num_threads=10)
+        val_imputed_mice = val_kernel.complete_data(0)
+
         for col in columns_to_impute:
-            # Get indices where values were artificially set to NaN
             mask = validation_masks[col] & validation_df[col].isna()
 
             if mask.sum() == 0:
@@ -109,13 +129,11 @@ def apply_mice_imputation(
                 continue
 
             real_vals = original_values[col][mask]
-            imputed_vals = imputed_df[col][mask]
+            imputed_vals = val_imputed_mice[col][mask]
 
-            # Calculate continuous metrics (MAE and RMSE) - NO ROUNDING
             mae = mean_absolute_error(real_vals, imputed_vals)
             rmse = np.sqrt(mean_squared_error(real_vals, imputed_vals))
 
-            # Calculate classification metrics - WITH ROUNDING
             real_vals_class = process_for_classification(real_vals)
             imputed_vals_class = process_for_classification(imputed_vals)
 
@@ -126,6 +144,8 @@ def apply_mice_imputation(
                 'rmse': rmse,
                 'accuracy': classification_metrics['accuracy'],
                 'auc_multiclass': classification_metrics['auc_multiclass'],
+                'qwk': classification_metrics['qwk'],
+                'within1_accuracy': classification_metrics['within1_accuracy'],
                 'avg_sensitivity': classification_metrics['avg_sensitivity'],
                 'avg_specificity': classification_metrics['avg_specificity'],
                 'avg_ppv': classification_metrics['avg_ppv'],

@@ -51,6 +51,10 @@ def make_synthetic_facte(
     pandas.DataFrame
         Columns: ``id``, ``redcap_event_name``, and the 44 FACT-E item columns.
     """
+    if not (1 <= n_visits <= len(VISITS)):
+        raise ValueError(
+            f"n_visits must be between 1 and {len(VISITS)}, got {n_visits}"
+        )
     rng = np.random.default_rng(seed)
     visits = VISITS[:n_visits]
     n_items = len(FACTE_COLUMNS)

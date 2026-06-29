@@ -62,7 +62,7 @@ def _make_validation(df, cols, frac=0.2, seed=11):
 def test_method_validation_results(name, data):
     method = mi.METHODS[name]
     validation_df, masks, originals = _make_validation(data, COLS)
-    _, validation = method(validation_df, COLS, validation_df, masks, originals)
+    _, validation = method(data, COLS, validation_df, masks, originals)
     assert validation is not None
     for col in COLS:
         res = validation[col]
@@ -72,6 +72,47 @@ def test_method_validation_results(name, data):
         assert "mae" in res and "rmse" in res and "accuracy" in res
         assert np.isfinite(res["mae"])
         assert res["mae"] >= 0
+
+
+@pytest.mark.parametrize("name", METHOD_NAMES)
+def test_validation_includes_ordinal_metrics(name, data):
+    method = mi.METHODS[name]
+    validation_df, masks, originals = _make_validation(data, COLS)
+    _, validation = method(data, COLS, validation_df, masks, originals)
+    assert validation is not None
+    for col in COLS:
+        res = validation[col]
+        if "error" in res:
+            continue
+        assert "qwk" in res, f"qwk missing from {name} validation for {col}"
+        assert "within1_accuracy" in res, f"within1_accuracy missing from {name} validation for {col}"
+        assert np.isfinite(res["within1_accuracy"])
+
+
+@pytest.mark.parametrize("name", ["mean", "median", "knn", "mice", "softimpute"])
+def test_all_nan_column_raises(name, data):
+    method = mi.METHODS[name]
+    df = data.copy()
+    df[COLS[0]] = np.nan
+    with pytest.raises(ValueError, match="entirely NaN"):
+        method(df, COLS[:1])
+
+
+def test_frob_identical_iterates_returns_zero():
+    from missing_imputation.methods.softimpute import frob
+    U = np.eye(3, 2)
+    Dsq = np.array([[3.0], [1.0]])
+    V = np.eye(4, 2)
+    assert frob(U, Dsq, V, U, Dsq, V) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_frob_different_iterates_returns_positive():
+    from missing_imputation.methods.softimpute import frob
+    U = np.eye(3, 2)
+    Dsq_old = np.array([[3.0], [1.0]])
+    Dsq_new = np.array([[5.0], [2.0]])
+    V = np.eye(4, 2)
+    assert frob(U, Dsq_old, V, U, Dsq_new, V) > 0
 
 
 def test_registry_matches_callables():

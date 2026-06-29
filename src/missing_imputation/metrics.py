@@ -8,6 +8,7 @@ remain identical to the published experiments.
 
 from __future__ import annotations
 
+import warnings
 from typing import Optional, Sequence
 
 import numpy as np
@@ -101,19 +102,33 @@ def calculate_classification_metrics(
 
         # For multi-class AUC, we need to binarize the labels
         try:
-            # Only calculate AUC if we have more than one class present
-            if len(np.unique(y_true)) > 1:
-                y_true_bin = label_binarize(y_true, classes=classes)
-                y_pred_bin = label_binarize(y_pred, classes=classes)
+            y_true_bin = label_binarize(y_true, classes=classes)
+            y_pred_bin = label_binarize(y_pred, classes=classes)
 
-                # If only 2 classes present, reshape
-                if y_true_bin.shape[1] == 1:
-                    auc_score = roc_auc_score(y_true_bin, y_pred_bin)
-                else:
-                    # Multi-class AUC (macro average)
-                    auc_score = roc_auc_score(y_true_bin, y_pred_bin, average='macro', multi_class='ovr')
-            else:
+            # Need at least two classes in y_true, and each binarised column
+            # must have both 0s and 1s for ROC-AUC to be defined.
+            true_classes = set(np.unique(y_true))
+            if len(true_classes) < 2:
                 auc_score = np.nan
+            elif y_true_bin.shape[1] == 1:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", category=UserWarning)
+                    auc_score = roc_auc_score(y_true_bin, y_pred_bin)
+            else:
+                cols_with_variation = [
+                    i for i in range(y_true_bin.shape[1])
+                    if y_true_bin[:, i].sum() not in (0, len(y_true_bin))
+                ]
+                if len(cols_with_variation) < 2:
+                    auc_score = np.nan
+                else:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", category=UserWarning)
+                        auc_score = roc_auc_score(
+                            y_true_bin[:, cols_with_variation],
+                            y_pred_bin[:, cols_with_variation],
+                            average='macro', multi_class='ovr',
+                        )
         except Exception:
             auc_score = np.nan
 

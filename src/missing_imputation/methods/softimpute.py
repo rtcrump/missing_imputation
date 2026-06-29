@@ -27,7 +27,7 @@ def frob(Uold, Dsqold, Vold, U, Dsq, V):
     utu = Dsq * (U.T.dot(Uold))
     vtv = Dsqold * (Vold.T.dot(V))
     uvprod = utu.dot(vtv).diagonal().sum()
-    num = denom + (Dsqold ** 2).sum() - 2*uvprod
+    num = (Dsq ** 2).sum() + (Dsqold ** 2).sum() - 2*uvprod
     return num / max(denom, 1e-9)
 
 
@@ -112,6 +112,7 @@ def apply_softimpute_imputation(
     lambda_: float = 0,
     maxit: int = 100,
     random_state: int = 42,
+    fallback: Optional[str] = None,
 ) -> ImputationResult:
     """
     Apply SoftImpute imputation using Travis Brady's implementation
@@ -138,6 +139,9 @@ def apply_softimpute_imputation(
         Maximum number of iterations
     random_state : int
         Random seed for reproducibility
+    fallback : str, optional
+        If ``"mean"``, fall back to mean imputation on failure instead of
+        raising. Default ``None`` lets exceptions propagate.
 
     Returns:
     --------
@@ -146,6 +150,12 @@ def apply_softimpute_imputation(
     validation_results : dict, optional
         Validation results if validation data provided
     """
+    for col in columns_to_impute:
+        if col in df.columns and df[col].isna().all():
+            raise ValueError(
+                f"Column '{col}' is entirely NaN — cannot impute from no observations"
+            )
+
     try:
         # Extract relevant columns including potential predictors
         # Use all columns except those with excessive missing values
@@ -301,6 +311,8 @@ def apply_softimpute_imputation(
                         'rmse': rmse,
                         'accuracy': classification_metrics['accuracy'],
                         'auc_multiclass': classification_metrics['auc_multiclass'],
+                        'qwk': classification_metrics['qwk'],
+                        'within1_accuracy': classification_metrics['within1_accuracy'],
                         'avg_sensitivity': classification_metrics['avg_sensitivity'],
                         'avg_specificity': classification_metrics['avg_specificity'],
                         'avg_ppv': classification_metrics['avg_ppv'],
@@ -316,16 +328,20 @@ def apply_softimpute_imputation(
 
         return imputed_df, validation_results
 
-    except Exception as e:
-        print(f"Error in SoftImpute imputation: {str(e)}")
+    except Exception:
+        if fallback != "mean":
+            raise
         import traceback
-        traceback.print_exc()
-
-        # Fallback to simple mean imputation
-        print("Falling back to simple mean imputation")
+        import warnings
+        warnings.warn(
+            f"SoftImpute failed, falling back to mean imputation: "
+            f"{traceback.format_exc(limit=1).splitlines()[-1]}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
         result_df = df.copy()
         for col in columns_to_impute:
             if col in result_df.columns:
                 result_df[col] = pd.to_numeric(result_df[col], errors='coerce')
                 result_df[col] = result_df[col].fillna(result_df[col].mean())
-        return result_df, None
+        return result_df, {"_fallback": "mean"}

@@ -4,6 +4,12 @@ data/
 # Research notebooks — contain PHI in cell outputs, excluded from public repo
 notebook/
 
+# Research scripts — LLM/deep-learning code, HPC job artifacts (v1.1 scope)
+script/
+
+# Generated experiment figures and CSV summaries
+result plot/
+
 # HPC job logs — may contain patient identifiers
 *.out
 *.err

@@ -205,7 +205,8 @@ def evaluate_with_sparse_validation(
                     results[method_name]["avg_npv"].append(cls["avg_npv"])
                     results[method_name]["precision_macro"].append(cls["precision_macro"])
                     results[method_name]["recall_macro"].append(cls["recall_macro"])
-                    results[method_name]["time"].append(execution_time)
+
+                results[method_name]["time"].append(execution_time)
 
                 if verbose and results[method_name]["mae"]:
                     recent = results[method_name]["mae"][-len(participating_cols):]

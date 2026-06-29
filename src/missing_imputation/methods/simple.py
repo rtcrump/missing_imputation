@@ -58,6 +58,8 @@ def _validate(imputed_df, columns_to_impute, validation_df, validation_masks,
                 'rmse': rmse,
                 'accuracy': classification_metrics['accuracy'],
                 'auc_multiclass': classification_metrics['auc_multiclass'],
+                'qwk': classification_metrics['qwk'],
+                'within1_accuracy': classification_metrics['within1_accuracy'],
                 'avg_sensitivity': classification_metrics['avg_sensitivity'],
                 'avg_specificity': classification_metrics['avg_specificity'],
                 'avg_ppv': classification_metrics['avg_ppv'],
@@ -76,6 +78,12 @@ def _apply_simple(df, columns_to_impute, statistic, validation_df,
 
     ``statistic`` is either 'mean' or 'median'.
     """
+    for col in columns_to_impute:
+        if col in df.columns and df[col].isna().all():
+            raise ValueError(
+                f"Column '{col}' is entirely NaN — cannot impute from no observations"
+            )
+
     imputed_df = df.copy()
     for col in columns_to_impute:
         if col in imputed_df.columns:
